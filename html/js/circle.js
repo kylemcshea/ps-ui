@@ -16,10 +16,9 @@ let key_to_press;
 let g_start, g_end;
 let animation_loop;
 
-
 let needed = 4;
 let streak = 0;
-
+let secret = null;
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);
@@ -40,7 +39,7 @@ function StartCircle() {
 
     // Green zone
     ctx.beginPath();
-    ctx.strokeStyle = correct === true? bgcolor3 : bgcolor2;
+    ctx.strokeStyle = bgcolor2;
     ctx.lineWidth = 20;
     ctx.arc(W / 2, H / 2, 100, g_start - 90 * Math.PI / 180, g_end - 90 * Math.PI / 180, false);
     ctx.stroke();
@@ -86,19 +85,21 @@ function animate_to() {
     StartCircle();
 }
 
-function correct(){
-    streak += 1;
-    if (streak == needed) {
-        clearInterval(animation_loop)
-        endGame(true)
-    }else{
-        draw(time);
-    };
-}
-
 function CircleFail(){
     clearInterval(animation_loop);
-    endGame(false);
+
+    $('#circle').hide();
+    circle_started = false;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", `https://ps-ui/circle`, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.send(JSON.stringify({
+        status : 'fail',
+        secret : secret
+    }));
+    streak = 0;
+    needed = 4;
+    secret = null;
 }
 
 document.addEventListener("keydown", function(ev) {
@@ -113,7 +114,27 @@ document.addEventListener("keydown", function(ev) {
             }else if( degrees > d_end ){
                 CircleFail();
             }else{
-                correct();
+
+                streak += 1;
+
+                if (streak == needed) {
+                    clearInterval(animation_loop)
+
+                    $('#circle').hide();
+                    circle_started = false;
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("POST", `https://ps-ui/circle`, true);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    xhr.send(JSON.stringify({
+                        status : 'success',
+                        secret : secret
+                    }));
+                    streak = 0;
+                    needed = 4;
+                    secret = null;
+                }else{
+                    draw(time);
+                };
             }
         }else{
             CircleFail();
@@ -125,24 +146,11 @@ function startGame(time){
     $('#circle').show();
     circle_started = true;
     draw(time);      
-  }
-  
-  function endGame(status){
-    $('#circle').hide();
-    circle_started = false;
-    var xhr = new XMLHttpRequest();
-    let u = "fail";
-        if(status)
-            u = "success";
-    xhr.open("POST", `https://ps-ui/circle-${u}`, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify({}));
-    streak = 0;
-    needed = 4;
-  }
-  
-  window.addEventListener("message", (event) => {
+}
+
+window.addEventListener("message", (event) => {
     if(event.data.action == "circle-start") {
+        secret = event.data.secret
         if(event.data.circles != null ){
             needed = event.data.circles
         }else{
@@ -153,7 +161,6 @@ function startGame(time){
         }else{
             time = 2
         }
-      startGame(time)
+        startGame(time)
     }
-  })
-
+})
