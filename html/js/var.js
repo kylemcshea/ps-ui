@@ -29,7 +29,7 @@ var validate = (ev) => {
     if (parseInt(ev.target.dataset.number, 10) === order) {
         ev.target.classList.add('good');
         order++;
-        if(order > numbers){
+        if (order > numbers) {
             var_started = false;
             game_playing = false;
             document.querySelector('.var-splash .var-text').innerHTML = 'SUCCESS!';

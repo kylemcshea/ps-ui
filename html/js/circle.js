@@ -18,7 +18,6 @@ let animation_loop;
 
 let needed = 4;
 let streak = 0;
-let secret = null;
 
 function getRandomInt(min, max) {
     min = Math.ceil(min);
@@ -90,30 +89,23 @@ function CircleFail(){
 
     $('#circle').hide();
     circle_started = false;
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", `https://ps-ui/circle`, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(JSON.stringify({
-        status : 'fail',
-        secret : secret
-    }));
+    $.post('https://ps-ui/circle', JSON.stringify({ status: 'fail' }));
     streak = 0;
     needed = 4;
-    secret = null;
 }
 
 document.addEventListener("keydown", function(ev) {
     let key_pressed = ev.key;
     let valid_keys = ['1','2','3','4'];
     if( valid_keys.includes(key_pressed) && circle_started ){
-        if( key_pressed === key_to_press ){
+        if ( key_pressed === key_to_press ) {
             let d_start = (180 / Math.PI) * g_start;
             let d_end = (180 / Math.PI) * g_end;
-            if( degrees < d_start ){
+            if ( degrees < d_start ) {
                 CircleFail();
-            }else if( degrees > d_end ){
+            } else if( degrees > d_end ) {
                 CircleFail();
-            }else{
+            } else {
 
                 streak += 1;
 
@@ -122,43 +114,35 @@ document.addEventListener("keydown", function(ev) {
 
                     $('#circle').hide();
                     circle_started = false;
-                    var xhr = new XMLHttpRequest();
-                    xhr.open("POST", `https://ps-ui/circle`, true);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    xhr.send(JSON.stringify({
-                        status : 'success',
-                        secret : secret
-                    }));
+                    $.post('https://ps-ui/circle', JSON.stringify({ status: 'success' }));
                     streak = 0;
                     needed = 4;
-                    secret = null;
                 }else{
                     draw(time);
                 };
             }
-        }else{
+        } else {
             CircleFail();
         }
     }
 });
 
-function startGame(time){
+function startGame(time) {
     $('#circle').show();
     circle_started = true;
     draw(time);      
 }
 
 window.addEventListener("message", (event) => {
-    if(event.data.action == "circle-start") {
-        secret = event.data.secret
-        if(event.data.circles != null ){
+    if (event.data.action == "circle-start") {
+        if (event.data.circles != null ) {
             needed = event.data.circles
-        }else{
+        } else {
             needed = 4
         }
-        if(event.data.time != null ){
+        if (event.data.time != null ) {
             time = event.data.time
-        }else{
+        } else {
             time = 2
         }
         startGame(time)
