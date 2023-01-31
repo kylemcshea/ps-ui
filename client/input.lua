@@ -1,6 +1,11 @@
 local p = nil
 local Active = false
 
+local function resetInputState()
+    p = nil
+    Active = false
+end
+
 local function Input(InputData)
     p = promise.new()
     while Active do Wait(0) end
@@ -20,12 +25,13 @@ exports("Input", Input)
 RegisterNUICallback('input-callback', function(data, cb)
 	SetNuiFocus(false, false)
     p:resolve(data.input)
-    p = nil
-    Active = false
+    resetInputState()
     cb('ok')
 end)
 
 RegisterNUICallback('input-close', function(data, cb)
     SetNuiFocus(false, false)
+    p:resolve(nil)
+    resetInputState()
     cb('ok')
 end)
